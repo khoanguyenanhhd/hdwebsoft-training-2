@@ -25,6 +25,8 @@ export class EventTrackingResolver {
 
     let done = false;
     let retryCount = 0;
+    let unhandle = false;
+
     let isLockedByAnotherUser = false;
     let isLockedByCurrentUser = false;
     let isUserEditAnotherEvent = false;
@@ -94,11 +96,18 @@ export class EventTrackingResolver {
         }
       } catch (error) {
         await queryRunner.rollbackTransaction();
+
+        if (!shouldRetryTransaction(error)) {
+          done = true;
+          unhandle = true;
+        }
       } finally {
         await queryRunner.release();
       }
     }
-    if (retryCount === 5) return "Access fail, please try again";
+
+    if (retryCount === 5 || unhandle)
+      return "Something went wrong, please try again";
 
     if (isUserEditAnotherEvent) return "One user can edit one event";
 
@@ -121,6 +130,8 @@ export class EventTrackingResolver {
 
     let done = false;
     let retryCount = 0;
+    let unhandle = false;
+
     let isLockedByAnotherUserAndOverTime = false;
     let isLockedByAnotherUserAndInTime = false;
     let isLockedByCurrentUserAndOverTime = false;
@@ -176,12 +187,18 @@ export class EventTrackingResolver {
         }
       } catch (error) {
         await queryRunner.rollbackTransaction();
+
+        if (!shouldRetryTransaction(error)) {
+          done = true;
+          unhandle = true;
+        }
       } finally {
         await queryRunner.release();
       }
     }
 
-    if (retryCount === 5) return "Something went wrong, please try again";
+    if (retryCount === 5 || unhandle)
+      return "Something went wrong, please try again";
 
     if (isLockedByAnotherUserAndOverTime)
       return "Need to access before releasing";
@@ -207,6 +224,8 @@ export class EventTrackingResolver {
 
     let done = false;
     let retryCount = 0;
+    let unhandle = false;
+
     let isLockedByAnotherUserAndOverTime = false;
     let isLockedByAnotherUserAndInTime = false;
     let isLockedByCurrentUserAndOverTime = false;
@@ -265,12 +284,18 @@ export class EventTrackingResolver {
         }
       } catch (error) {
         await queryRunner.rollbackTransaction();
+
+        if (!shouldRetryTransaction(error)) {
+          done = true;
+          unhandle = true;
+        }
       } finally {
         await queryRunner.release();
       }
     }
 
-    if (retryCount === 5) return "Something went wrong, please try again";
+    if (retryCount === 5 || unhandle)
+      return "Something went wrong, please try again";
 
     if (isLockedByAnotherUserAndOverTime)
       return "Need to access before maintain";
